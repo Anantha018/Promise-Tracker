@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+myenv/
+env/
+.env
+
+# Database — never commit real data
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets
+.env
+*.key
+secrets.py
+
+# Agent workspace
+agent_workspace/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+*.code-workspace
+

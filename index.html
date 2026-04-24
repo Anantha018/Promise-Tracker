@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Promise Tracker — AI Political Accountability</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+
+    /* ── LANDING PAGE ── */
+    #landingPage { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
+    .landing-title { font-size: 42px; font-weight: 800; text-align: center; margin-bottom: 12px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .landing-sub { font-size: 16px; color: #718096; text-align: center; margin-bottom: 60px; max-width: 500px; line-height: 1.6; }
+    .landing-sub span { color: #a0aec0; }
+
+    .politician-cards { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+
+    .pol-card { background: #1a1a2e; border: 1px solid #2d3748; border-radius: 20px; padding: 36px 32px; cursor: pointer; transition: all 0.25s; text-align: center; width: 260px; position: relative; overflow: hidden; }
+    .pol-card::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.25s; }
+    .pol-card.trump::before { background: radial-gradient(circle at top, rgba(220,38,38,0.1), transparent 60%); }
+    .pol-card.wes_moore::before { background: radial-gradient(circle at top, rgba(37,99,235,0.1), transparent 60%); }
+    .pol-card.modi::before { background: radial-gradient(circle at top, rgba(234,179,8,0.1), transparent 60%); }
+    .pol-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.5); border-color: #4a5568; }
+    .pol-card:hover::before { opacity: 1; }
+
+    .pol-flag { font-size: 52px; margin-bottom: 16px; display: block; }
+    .pol-name { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .pol-role { font-size: 13px; color: #718096; margin-bottom: 20px; }
+    .pol-count { font-size: 12px; color: #4a5568; background: #111827; padding: 6px 14px; border-radius: 20px; display: inline-block; }
+    .pol-arrow { position: absolute; bottom: 20px; right: 24px; font-size: 20px; color: #2d3748; transition: all 0.2s; }
+    .pol-card:hover .pol-arrow { color: #667eea; transform: translateX(4px); }
+
+    .landing-footer { margin-top: 60px; font-size: 12px; color: #4a5568; text-align: center; }
+
+    /* ── RESULTS PAGE ── */
+    #resultsPage { display: none; }
+
+    header { background: linear-gradient(135deg, #1a1a2e, #16213e); border-bottom: 1px solid #2d3748; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+    .back-btn { background: #2d3748; border: none; color: #a0aec0; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .back-btn:hover { background: #4a5568; color: #fff; }
+    .header-pol { display: flex; align-items: center; gap: 12px; }
+    .header-flag { font-size: 28px; }
+    .header-name { font-size: 18px; font-weight: 700; color: #fff; }
+    .header-role { font-size: 12px; color: #718096; }
+
+    .stats-bar { background: #111827; padding: 14px 32px; display: flex; gap: 28px; align-items: center; border-bottom: 1px solid #1f2937; }
+    .stat { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .stat-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .stat-count { font-size: 18px; font-weight: 700; }
+    .stat-label { color: #718096; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #2d3748; background: #1a202c; color: #a0aec0; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .filter-btn:hover, .filter-btn.active { background: #2d3748; color: #fff; }
+    .filter-btn.active { border-color: #667eea; color: #667eea; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+    .card { background: #1a1a2e; border: 1px solid #2d3748; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .card:hover { border-color: #4a5568; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .card.kept::before { background: #48bb78; }
+    .card.broken::before { background: #fc8181; }
+    .card.in_progress::before { background: #63b3ed; }
+    .card.partial::before { background: #f6ad55; }
+    .card.reversed::before { background: #b794f4; }
+    .card.unknown::before, .card.pending::before { background: #718096; }
+
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px; }
+    .category-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #718096; background: #2d3748; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+    .status-badge { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+    .status-badge.kept { background: rgba(72,187,120,0.15); color: #48bb78; }
+    .status-badge.broken { background: rgba(252,129,129,0.15); color: #fc8181; }
+    .status-badge.in_progress { background: rgba(99,179,237,0.15); color: #63b3ed; }
+    .status-badge.partial { background: rgba(246,173,85,0.15); color: #f6ad55; }
+    .status-badge.reversed { background: rgba(183,148,244,0.15); color: #b794f4; }
+    .status-badge.unknown, .status-badge.pending { background: rgba(113,128,150,0.15); color: #718096; }
+
+    .promise-text { font-size: 14px; line-height: 1.6; color: #cbd5e0; margin-bottom: 12px; }
+    .verdict-text { font-size: 12px; color: #718096; line-height: 1.5; border-top: 1px solid #2d3748; padding-top: 12px; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #1a1a2e; border: 1px solid #2d3748; border-radius: 16px; max-width: 660px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 28px; }
+    .modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
+    .modal-title { font-size: 17px; font-weight: 600; color: #fff; line-height: 1.5; flex: 1; }
+    .close-btn { background: #2d3748; border: none; color: #a0aec0; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .close-btn:hover { background: #4a5568; }
+    .modal-verdict { background: #111827; border-radius: 10px; padding: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.7; color: #cbd5e0; }
+    .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: #718096; margin-bottom: 10px; }
+    .news-item { padding: 10px 0; border-bottom: 1px solid #2d3748; font-size: 13px; }
+    .news-item:last-child { border-bottom: none; }
+    .news-title { color: #90cdf4; text-decoration: none; line-height: 1.4; display: block; margin-bottom: 3px; }
+    .news-title:hover { color: #63b3ed; text-decoration: underline; }
+    .news-meta { color: #718096; font-size: 11px; }
+
+    .subscribe-section { margin-top: 40px; background: #1a1a2e; border: 1px solid #2d3748; border-radius: 12px; padding: 24px; text-align: center; }
+    .subscribe-section h3 { font-size: 16px; margin-bottom: 8px; }
+    .subscribe-section p { color: #718096; font-size: 13px; margin-bottom: 16px; }
+    .subscribe-form { display: flex; gap: 10px; max-width: 400px; margin: 0 auto; }
+    .subscribe-form input { flex: 1; padding: 10px 14px; background: #111827; border: 1px solid #2d3748; border-radius: 8px; color: #fff; font-size: 14px; }
+    .subscribe-form input::placeholder { color: #4a5568; }
+    .subscribe-form button { padding: 10px 20px; background: #667eea; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+    .loading { text-align: center; padding: 60px; color: #718096; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #2d3748; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ── LANDING PAGE ── -->
+<div id="landingPage">
+  <div class="landing-title">🗳️ Promise Tracker</div>
+  <p class="landing-sub">
+    AI-powered political accountability.<br/>
+    <span>We track campaign promises and tell you — kept, broken, or in progress.</span>
+  </p>
+
+  <div class="politician-cards">
+    <div class="pol-card trump" onclick="selectPolitician('trump','🇺🇸','Donald Trump','US President')">
+      <span class="pol-flag">🇺🇸</span>
+      <div class="pol-name">Donald Trump</div>
+      <div class="pol-role">President of the United States</div>
+      <div class="pol-count">10 promises tracked</div>
+      <span class="pol-arrow">→</span>
+    </div>
+
+    <div class="pol-card wes_moore" onclick="selectPolitician('wes_moore','🏛️','Wes Moore','Governor of Maryland')">
+      <span class="pol-flag">🏛️</span>
+      <div class="pol-name">Wes Moore</div>
+      <div class="pol-role">Governor of Maryland</div>
+      <div class="pol-count">10 promises tracked</div>
+      <span class="pol-arrow">→</span>
+    </div>
+
+    <div class="pol-card modi" onclick="selectPolitician('modi','🇮🇳','Narendra Modi','Prime Minister of India')">
+      <span class="pol-flag">🇮🇳</span>
+      <div class="pol-name">Narendra Modi</div>
+      <div class="pol-role">Prime Minister of India</div>
+      <div class="pol-count">10 promises tracked</div>
+      <span class="pol-arrow">→</span>
+    </div>
+  </div>
+
+  <div class="landing-footer">
+    Nonpartisan · Evidence-based · Powered by AI · Updated daily
+  </div>
+</div>
+
+<!-- ── RESULTS PAGE ── -->
+<div id="resultsPage">
+  <header>
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div class="header-pol">
+      <span class="header-flag" id="headerFlag"></span>
+      <div>
+        <div class="header-name" id="headerName"></div>
+        <div class="header-role" id="headerRole"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="stats-bar" id="statsBar">
+    <div style="color:#718096;font-size:13px;">Loading...</div>
+  </div>
+
+  <div class="container">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterBy('all',this)">All</button>
+      <button class="filter-btn" onclick="filterBy('kept',this)">✅ Kept</button>
+      <button class="filter-btn" onclick="filterBy('broken',this)">❌ Broken</button>
+      <button class="filter-btn" onclick="filterBy('in_progress',this)">🔄 In Progress</button>
+      <button class="filter-btn" onclick="filterBy('partial',this)">⚠️ Partial</button>
+      <button class="filter-btn" onclick="filterBy('reversed',this)">🔁 Reversed</button>
+    </div>
+
+    <div class="grid" id="grid">
+      <div class="loading"><div class="spinner"></div>Loading promises...</div>
+    </div>
+
+    <div class="subscribe-section">
+      <h3>📬 Daily Promise Digest</h3>
+      <p>Get daily email updates when promise statuses change</p>
+      <div class="subscribe-form">
+        <input type="email" id="emailInput" placeholder="your@email.com"/>
+        <button onclick="subscribe()">Subscribe</button>
+      </div>
+      <p id="subscribeMsg" style="margin-top:10px;font-size:13px;color:#48bb78;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="close-btn" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div id="modalStatus"></div>
+    <div class="modal-verdict" id="modalVerdict"></div>
+    <div class="section-title">📰 Related News</div>
+    <div id="modalNews"></div>
+  </div>
+</div>
+
+<script>
+const API = "http://localhost:8000"
+let allPromises = []
+let currentFilter = 'all'
+let currentPolitician = ''
+
+const EMOJI = { kept:'✅', broken:'❌', in_progress:'🔄', partial:'⚠️', reversed:'🔁', unknown:'❓', pending:'⏳' }
+const LABEL = { kept:'Kept', broken:'Broken', in_progress:'In Progress', partial:'Partial', reversed:'Reversed', unknown:'Unknown', pending:'Pending' }
+
+function selectPolitician(id, flag, name, role) {
+  currentPolitician = id
+  document.getElementById('landingPage').style.display = 'none'
+  document.getElementById('resultsPage').style.display = 'block'
+  document.getElementById('headerFlag').textContent = flag
+  document.getElementById('headerName').textContent = name
+  document.getElementById('headerRole').textContent = role
+  currentFilter = 'all'
+  document.querySelectorAll('.filter-btn').forEach((b,i) => b.classList.toggle('active', i===0))
+  loadStats()
+  loadPromises()
+}
+
+function goBack() {
+  document.getElementById('resultsPage').style.display = 'none'
+  document.getElementById('landingPage').style.display = 'flex'
+}
+
+async function loadStats() {
+  const res = await fetch(`${API}/stats?politician=${currentPolitician}`)
+  const stats = await res.json()
+  const total = Object.values(stats).reduce((a,b) => a+b, 0)
+  const kept = stats.kept || 0
+  const broken = stats.broken || 0
+  const inProg = (stats.in_progress||0) + (stats.partial||0)
+  const pct = total ? Math.round((kept/total)*100) : 0
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat"><div class="stat-dot" style="background:#48bb78"></div><span class="stat-count" style="color:#48bb78">${kept}</span><span class="stat-label">Kept</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#fc8181"></div><span class="stat-count" style="color:#fc8181">${broken}</span><span class="stat-label">Broken</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#63b3ed"></div><span class="stat-count" style="color:#63b3ed">${inProg}</span><span class="stat-label">In Progress</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#718096"></div><span class="stat-count">${total}</span><span class="stat-label">Total</span></div>
+    <div class="stat" style="margin-left:auto"><span style="color:#667eea;font-weight:700;font-size:20px">${pct}%</span><span class="stat-label" style="margin-left:6px">Kept Rate</span></div>
+  `
+}
+
+async function loadPromises() {
+  document.getElementById('grid').innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>'
+  const res = await fetch(`${API}/promises?politician=${currentPolitician}`)
+  allPromises = await res.json()
+  renderGrid()
+}
+
+function renderGrid() {
+  const filtered = currentFilter === 'all' ? allPromises : allPromises.filter(p => p.status === currentFilter)
+  if (!filtered.length) {
+    document.getElementById('grid').innerHTML = '<div style="color:#718096;padding:40px;grid-column:1/-1;text-align:center">No promises found</div>'
+    return
+  }
+  document.getElementById('grid').innerHTML = filtered.map(p => `
+    <div class="card ${p.status}" onclick="openModal(${p.id})">
+      <div class="card-header">
+        <span class="category-tag">${p.category}</span>
+        <span class="status-badge ${p.status}">${EMOJI[p.status]||'❓'} ${LABEL[p.status]||p.status}</span>
+      </div>
+      <div class="promise-text">${p.text}</div>
+      ${p.verdict ? `<div class="verdict-text">${p.verdict}</div>` : ''}
+    </div>
+  `).join('')
+}
+
+function filterBy(status, btn) {
+  currentFilter = status
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  renderGrid()
+}
+
+async function openModal(id) {
+  const res = await fetch(`${API}/promises/${id}`)
+  const data = await res.json()
+  document.getElementById('modalTitle').textContent = data.text
+  document.getElementById('modalStatus').innerHTML = `<div style="margin-bottom:16px"><span class="status-badge ${data.status}" style="display:inline-flex">${EMOJI[data.status]||'❓'} ${LABEL[data.status]||data.status}</span></div>`
+  document.getElementById('modalVerdict').textContent = data.verdict || 'Analysis pending.'
+  document.getElementById('modalNews').innerHTML = data.articles?.length
+    ? data.articles.map(a => `
+        <div class="news-item">
+          <a class="news-title" href="${a.url}" target="_blank">${a.title}</a>
+          <span class="news-meta">${a.source} · ${a.published ? new Date(a.published).toLocaleDateString() : ''}</span>
+        </div>`).join('')
+    : '<div style="color:#718096;font-size:13px">No articles yet. Run scraper to fetch latest.</div>'
+  document.getElementById('modalOverlay').classList.add('open')
+}
+
+function closeModal(e) { if (e.target === document.getElementById('modalOverlay')) closeModalDirect() }
+function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open') }
+
+async function subscribe() {
+  const email = document.getElementById('emailInput').value.trim()
+  if (!email) return
+  const res = await fetch(`${API}/subscribe`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, topics:[currentPolitician]}) })
+  const data = await res.json()
+  document.getElementById('subscribeMsg').textContent = data.success ? '✅ Subscribed!' : '❌ ' + data.error
+}
+</script>
+</body>
+</html>
