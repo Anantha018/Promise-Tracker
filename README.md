@@ -263,7 +263,7 @@ No spin. No agenda. Just facts.
 
 Built **solo** at the **Claude AI Hackathon** at University of Maryland, April 2026.
 
-This entire project — architecture, backend, frontend, AI pipeline, data sources, and ethical framework — was designed and built by one person during the hackathon.
+This entire project — architecture, backend, frontend, AI pipeline, data sources, and ethical framework — was designed and built by me person during the hackathon.
 
 ---
 
