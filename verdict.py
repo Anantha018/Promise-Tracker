@@ -4,7 +4,7 @@ from datetime import datetime
 from groq import Groq
 from database import get_conn
 
-GROQ_API_KEY = "gsk_actual_key_here"
+GROQ_API_KEY = "YOUR_API_KEY"
 MODEL = "llama-3.3-70b-versatile"
 client = Groq(api_key=GROQ_API_KEY)
 
